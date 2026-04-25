@@ -241,3 +241,20 @@
 ## Notes
 
 All implementable front-end development tasks are complete. Manual cross-browser testing and GitHub Pages deployment are intentionally left unchecked because they require an external browser/device matrix and repository access.
+
+---
+
+## 17. Audit & Fix Pass
+
+- [x] Re-check local project structure
+- [x] Re-check local links and assets
+- [x] Re-check JavaScript syntax
+- [x] Fix events filtering state reset issue
+- [x] Improve dark/light theme contrast
+- [x] Improve responsive slider and mobile card actions
+- [x] Improve navbar toggler and focus states
+- [x] Add safer localStorage handling
+- [x] Add Bootstrap modal fallback protection
+- [x] Update test report
+
+Manual browser/device testing remains recommended before final deployment.

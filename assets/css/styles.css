@@ -526,3 +526,99 @@ p { color: var(--muted); }
   .filter-footer { align-items: flex-start; flex-direction: column; }
   .gallery-grid { grid-template-columns: 1fr; }
 }
+
+/* Audit refinements: stronger theme contrast, mobile controls, and accessible focus states. */
+:root { color-scheme: light; }
+[data-theme="dark"] { color-scheme: dark; }
+body { overflow-x: hidden; }
+
+.text-muted { color: var(--muted) !important; }
+[data-theme="dark"] .modal-backdrop { --bs-backdrop-opacity: .72; }
+[data-theme="dark"] .btn-close { filter: invert(1) grayscale(100%); }
+[data-theme="dark"] .btn-outline-secondary {
+  --bs-btn-color: var(--muted);
+  --bs-btn-border-color: var(--line);
+  --bs-btn-hover-color: var(--text);
+  --bs-btn-hover-bg: var(--surface-strong);
+  --bs-btn-hover-border-color: var(--line);
+}
+
+.form-control::placeholder,
+textarea.form-control::placeholder { color: color-mix(in srgb, var(--muted) 82%, transparent); opacity: 1; }
+.form-select option { background: var(--surface); color: var(--text); }
+
+.navbar-toggler {
+  border-color: var(--line);
+  border-radius: 14px;
+  padding: .55rem .7rem;
+}
+.navbar-toggler:focus { box-shadow: 0 0 0 .22rem var(--primary-soft); }
+[data-theme="dark"] .navbar-toggler-icon { filter: invert(1) grayscale(100%); }
+
+.event-card { display: flex; flex-direction: column; }
+.event-card-body { flex: 1; display: flex; flex-direction: column; }
+.event-card-body p { flex: 1; }
+.card-actions { margin-top: auto; }
+
+.slider-button,
+.category-pill,
+.event-card,
+.btn,
+.form-control,
+.form-select { outline: none; }
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--primary) 50%, transparent);
+  outline-offset: 3px;
+}
+
+@media (max-width: 991.98px) {
+  .nav-actions {
+    padding-top: .75rem;
+    justify-content: flex-start;
+  }
+  .navbar-nav { gap: .15rem; }
+}
+
+@media (max-width: 767.98px) {
+  .featured-shell {
+    grid-template-columns: repeat(2, auto);
+    justify-content: center;
+  }
+  .featured-slider {
+    grid-column: 1 / -1;
+    order: -1;
+    width: 100%;
+  }
+  .card-actions .btn { flex: 1 1 100%; }
+  .page-hero,
+  .event-detail-hero,
+  .home-hero { text-align: initial; }
+}
+
+@media (max-width: 575.98px) {
+  .logo-mark {
+    inline-size: 38px;
+    block-size: 38px;
+    border-radius: 13px;
+  }
+  .brand-text { font-size: 1rem; }
+  .category-pills { grid-template-columns: 1fr; }
+  .slider-card-content { padding: 1.1rem; }
+  .event-card-body { padding: 1rem; }
+  .hero-actions .btn { width: 100%; }
+  .hero-stats div { padding: .85rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

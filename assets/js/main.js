@@ -465,9 +465,33 @@ const I18N = {
   }
 };
 
+function readPreference(key, fallback = '') {
+  try {
+    return localStorage.getItem(key) || fallback;
+  } catch (error) {
+    return fallback;
+  }
+}
+
+function writePreference(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch (error) {
+    // Preferences are progressive enhancement; the UI still works without storage.
+  }
+}
+
+function removePreference(key) {
+  try {
+    localStorage.removeItem(key);
+  } catch (error) {
+    // Ignore storage errors in restricted browsing modes.
+  }
+}
+
 const APP = {
-  lang: localStorage.getItem('ue_lang') || 'en',
-  theme: localStorage.getItem('ue_theme') || 'light',
+  lang: readPreference('ue_lang', 'en'),
+  theme: readPreference('ue_theme', 'light'),
   sliderIndex: 0,
   sliderTimer: null,
   currentEventId: null
@@ -495,7 +519,7 @@ function escapeHtml(value) {
 
 function applyLanguage(lang) {
   APP.lang = lang;
-  localStorage.setItem('ue_lang', lang);
+  writePreference('ue_lang', lang);
   document.documentElement.lang = lang;
   document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
   const bootstrapLink = document.getElementById('bootstrapStylesheet');
@@ -509,7 +533,7 @@ function applyLanguage(lang) {
 
 function applyTheme(theme) {
   APP.theme = theme;
-  localStorage.setItem('ue_theme', theme);
+  writePreference('ue_theme', theme);
   document.documentElement.dataset.theme = theme;
   const button = document.querySelector('[data-action="toggle-theme"]');
   if (button) button.textContent = theme === 'dark' ? (APP.lang === 'ar' ? 'فاتح' : 'Light') : t('nav.theme');
@@ -604,6 +628,23 @@ function setupSliderTimer() {
   APP.sliderTimer = setInterval(() => moveSlider(1), 5500);
 }
 
+function getStoredFilters() {
+  try {
+    return JSON.parse(readPreference('ue_filters', '{}'));
+  } catch (error) {
+    removePreference('ue_filters');
+    return {};
+  }
+}
+
+function getFilterValues() {
+  return {
+    category: document.getElementById('categoryFilter')?.value || 'all',
+    date: document.getElementById('dateFilter')?.value || 'all',
+    location: document.getElementById('locationFilter')?.value || 'all'
+  };
+}
+
 function populateFilters() {
   const categoryFilter = document.getElementById('categoryFilter');
   const dateFilter = document.getElementById('dateFilter');
@@ -611,26 +652,30 @@ function populateFilters() {
   if (!categoryFilter || !dateFilter || !locationFilter) return;
 
   const params = new URLSearchParams(window.location.search);
-  const saved = JSON.parse(localStorage.getItem('ue_filters') || '{}');
-  const current = {
-    category: params.get('category') || saved.category || 'all',
-    date: saved.date || 'all',
-    location: saved.location || 'all'
-  };
+  const saved = getStoredFilters();
+  const hydrated = categoryFilter.dataset.hydrated === 'true';
+  const currentValues = getFilterValues();
+  const current = hydrated
+    ? currentValues
+    : {
+        category: params.get('category') || saved.category || 'all',
+        date: saved.date || 'all',
+        location: saved.location || 'all'
+      };
 
   const categories = [...new Set(EVENTS.map((event) => event.category))];
-  categoryFilter.innerHTML = `<option value="all">${t('filters.allCategories')}</option>` + categories.map((category) => `<option value="${category}">${t(`categories.${category}`)}</option>`).join('');
-
   const months = [...new Set(EVENTS.map((event) => event.date.slice(0, 7)))];
-  const monthLabels = { '2026-04': t('filters.monthApr'), '2026-05': t('filters.monthMay'), '2026-06': t('filters.monthJun') };
-  dateFilter.innerHTML = `<option value="all">${t('filters.allDates')}</option>` + months.map((month) => `<option value="${month}">${monthLabels[month] || month}</option>`).join('');
-
   const locations = [...new Set(EVENTS.map((event) => event.location))];
+  const monthLabels = { '2026-04': t('filters.monthApr'), '2026-05': t('filters.monthMay'), '2026-06': t('filters.monthJun') };
+
+  categoryFilter.innerHTML = `<option value="all">${t('filters.allCategories')}</option>` + categories.map((category) => `<option value="${category}">${t(`categories.${category}`)}</option>`).join('');
+  dateFilter.innerHTML = `<option value="all">${t('filters.allDates')}</option>` + months.map((month) => `<option value="${month}">${monthLabels[month] || month}</option>`).join('');
   locationFilter.innerHTML = `<option value="all">${t('filters.allLocations')}</option>` + locations.map((location) => `<option value="${location}">${t(`locations.${location}`)}</option>`).join('');
 
-  categoryFilter.value = current.category;
-  dateFilter.value = current.date;
-  locationFilter.value = current.location;
+  categoryFilter.value = categories.includes(current.category) ? current.category : 'all';
+  dateFilter.value = months.includes(current.date) ? current.date : 'all';
+  locationFilter.value = locations.includes(current.location) ? current.location : 'all';
+  categoryFilter.dataset.hydrated = 'true';
 }
 
 function renderEventsPage() {
@@ -641,7 +686,7 @@ function renderEventsPage() {
   const date = document.getElementById('dateFilter').value;
   const location = document.getElementById('locationFilter').value;
   const filters = { category, date, location };
-  localStorage.setItem('ue_filters', JSON.stringify(filters));
+  writePreference('ue_filters', JSON.stringify(filters));
 
   const filtered = EVENTS.filter((event) => {
     const byCategory = category === 'all' || event.category === category;
@@ -735,8 +780,15 @@ function bindBookingButtons() {
       if (preview) preview.textContent = event ? eventText(event).title : t('modal.chooseEvent');
       const bookingAlert = document.getElementById('bookingAlert');
       if (bookingAlert) bookingAlert.innerHTML = '';
-      const modal = new bootstrap.Modal(document.getElementById('bookingModal'));
-      modal.show();
+      const modalElement = document.getElementById('bookingModal');
+      if (window.bootstrap?.Modal && modalElement) {
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+      } else if (modalElement) {
+        modalElement.classList.add('show');
+        modalElement.style.display = 'block';
+        modalElement.removeAttribute('aria-hidden');
+      }
     });
   });
 }
@@ -778,7 +830,7 @@ function bindGlobalControls() {
     document.getElementById(id)?.addEventListener('change', renderEventsPage);
   });
   document.getElementById('clearFilters')?.addEventListener('click', () => {
-    localStorage.removeItem('ue_filters');
+    removePreference('ue_filters');
     const cleanUrl = window.location.pathname.endsWith('events.html') ? 'events.html' : window.location.pathname;
     if (window.location.search) window.history.replaceState(null, '', cleanUrl);
     ['categoryFilter', 'dateFilter', 'locationFilter'].forEach((id) => { const el = document.getElementById(id); if (el) el.value = 'all'; });

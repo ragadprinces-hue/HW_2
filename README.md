@@ -23,15 +23,25 @@ A complete front-end only university events website built from the provided PRD 
 - Responsive Bootstrap layout
 - Customized modern university event UI
 - Dynamic featured events slider
-- Dynamic event filtering
+- Dynamic event filtering by category, month, and location
 - Contact form validation
 - Arabic and English content switching
 - RTL layout for Arabic and LTR layout for English
 - Bootstrap RTL stylesheet switching
 - Booking modal UI demo
 - Scroll-to-top button
-- Dark mode toggle
-- Filter preferences saved with localStorage
+- Dark/light mode toggle
+- Filter preferences saved with `localStorage`
+- Safer storage fallback if browser preferences are restricted
+- Improved dark-theme contrast and mobile layout polish
+
+## Recent audit fixes
+
+- Fixed filter state handling so selected filters are not reset during re-rendering.
+- Improved dark/light theme details for modals, buttons, forms, placeholders, and navbar controls.
+- Improved responsive behavior for slider controls, card actions, hero buttons, and category pills.
+- Added accessible focus states and reduced-motion CSS support.
+- Added a Bootstrap modal fallback guard to avoid runtime errors if the CDN script is unavailable.
 
 ## Run locally
 
